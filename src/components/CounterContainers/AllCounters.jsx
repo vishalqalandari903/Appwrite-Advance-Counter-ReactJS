@@ -11,17 +11,19 @@ export const AllCounters = () => {
 
   return (
     <CountersWrapper>
-      {counters.map((counter, index) => (
-        <Counter
-          counter={counter}
-          key={counter.$id}
-          id={counter.$id}
-          name={counter.name}
-          count={counter.value}
-          index={index}
-          slug={counter.slug}
-        />
-      ))}
+      {counters.length == 0 &&
+        counters.map((counter, index) => (
+          <Counter
+            counter={counter}
+            key={counter.$id}
+            id={counter.$id}
+            name={counter.name}
+            count={counter.value}
+            index={index}
+            slug={counter.slug}
+          />
+        ))}
+      {counters.length !== 0 && <p>Counters Not Found</p>}
     </CountersWrapper>
   );
 };
