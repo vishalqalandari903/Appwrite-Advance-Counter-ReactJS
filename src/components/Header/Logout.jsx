@@ -1,5 +1,4 @@
 import React, { useState } from "react";
-import { account } from "../../appwrite/appwriteConfig";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -13,22 +12,30 @@ import {
 } from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
+import counterService from "@/appwrite/counter";
+import authService from "@/appwrite/auth";
+import { useDispatch } from "react-redux";
+import { logout } from "@/app/slices/auth";
 
-export const Logout = ({ onLogout }) => {
+export const Logout = () => {
   const [loggingOut, setLoggingOut] = useState(false);
-  const navigate = useNavigate();
+
+  const dispatch = useDispatch();
 
   const handleLogout = async () => {
-    try {
-      setLoggingOut(true);
-      document.querySelector("html").style.pointerEvents = "none";
-      await account.deleteSession("current");
-      onLogout();
-    } catch (error) {
-      console.log("Appwrite :: Logout Error :: ", error);
-    }
-    document.querySelector("html").style.pointerEvents = "";
-    setLoggingOut(false);
+    setLoggingOut(true);
+    authService
+      .logout()
+      .then(() => {
+        dispatch(logout());
+      })
+      .catch((error) => {
+        console.log("error", error);
+      })
+      .finally(() => {
+        document.querySelector("html").style.pointerEvents = "";
+        setLoggingOut(false);
+      });
   };
 
   return (

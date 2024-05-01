@@ -9,15 +9,28 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { ID } from "appwrite";
 
 import React, { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import { useNavigate } from "react-router-dom";
 
-import counter from "../../appwrite/counter";
+import counterService from "../../appwrite/counter";
+import { useSelector } from "react-redux";
+
+// import { AlertCircle } from "lucide-react";
+
+// import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+
+import Alert from "@mui/material/Alert";
 
 export const AddCounterContainer = () => {
+  const errors = {
+    counterNameTaken: "Counter Name has already been taken",
+    allFieldsRequired: "All fields are required",
+  };
+  const userData = useSelector((state) => state.auth.userData);
+  const [errorMsg, setErrorMsg] = useState(errors.allFieldsRequired);
+
   const navigate = useNavigate();
   const { register, handleSubmit, watch, setValue, getValues } = useForm({
     defaultValues: {
@@ -28,16 +41,27 @@ export const AddCounterContainer = () => {
   const [hasCountLimit, setHasCountLimit] = useState(
     getValues("hasCountLimit")
   );
-  // const [Slug, setSlug] = useState("");
 
-  // useEffect(() => {
-  //   console.log(
-  //     watch("counterName")
-  //       .replace(/[^\w\s]|_/g, "")
-  //       .replace(/^\s+/, "")
-  //       .replace(/\s+/g, "-")
-  //   );
-  // }, [watch("counterName")]);
+  const counters = useSelector((state) => state.counter.counters);
+
+  useEffect(() => {
+    let slug = watch("counterName")
+      .toLowerCase()
+      .trim()
+      .replace(/\s+/g, "-")
+      .replace(/^-+|-+$/g, "");
+
+    if (slug !== slug.replace(/[^a-z0-9\s-]/gi, "")) {
+      setErrorMsg("special characters are not allowed in counter name");
+    } else {
+      if (counters.find((counter) => counter.$id == slug)) {
+        setErrorMsg(errors.counterNameTaken);
+      } else {
+        setErrorMsg("");
+      }
+    }
+    // .replace(/[^a-z0-9\s]/gi, "") // Remove all non-alphanumeric characters except spaces globally
+  }, [watch("counterName")]);
 
   useEffect(() => {
     setHasCountLimit(getValues("hasCountLimit") == "true");
@@ -57,40 +81,41 @@ export const AddCounterContainer = () => {
   };
 
   const onSubmit = (data) => {
-    console.log(data);
-    // counterDefaultValue: 0
-    // counterName: "s s"
-    // counterResetValue: 0
-    // hasCountLimit: false
-    // maximumValue: 1
-    // minimumValue: 0
-    // status: "public"
-
-    let createdOn = getCurrentDate();
     let slug = data.counterName
-      .toLowerCase()
-      .trim()
-      .replace(/[^\w\s]+/g, "")
-      .replace(/\s+/g, " ")
-      .replace(/(\w)\s(\w)/g, "$1-$2")
-      .replaceAll(" ", "-");
-    let counterData = {
-      counterName: data.counterName,
-      counterDefaultValue: data.counterDefaultValue,
-      counterResetValue: data.counterResetValue,
-      countLimit: {
-        hasCountLimit: data.hasCountLimit,
-        minimumValue: data.minimumValue,
-        maximumValue: data.maximumValue,
-      },
-      status: data.status,
-      userId: ID.unique(),
-      createdOn: createdOn,
-      slug: slug,
-    };
-
-    console.log(counter.client);
-    counter.createCounter(counterData);
+      .toLowerCase() // Convert to lower case
+      .trim() // Trim whitespace from both ends
+      .replace(/[^a-z0-9\s]/gi, "") // Remove all non-alphanumeric characters except spaces globally
+      .replace(/\s+/g, "-");
+    if (counters.find((counter) => counter.$id == slug)) {
+      setErrorMsg(errors.counterNameTaken);
+      window.scrollTo(0, 0);
+    } else {
+      setErrorMsg("");
+      let createdOn = getCurrentDate();
+      let counterData = {
+        counterName: data.counterName,
+        counterDefaultValue: Number(data.counterDefaultValue),
+        counterResetValue: Number(data.counterResetValue),
+        countLimit: {
+          hasCountLimit: data.hasCountLimit,
+          minimumValue: Number(data.minimumValue),
+          maximumValue: Number(data.maximumValue),
+        },
+        status: data.status,
+        userId: userData.$id,
+        createdOn,
+        slug,
+      };
+      counterService
+        .createCounter(counterData)
+        .then((data) => {
+          navigate("/");
+        })
+        .catch((error) => {
+          console.log("error addCounterContainer", error);
+        })
+        .finally(() => {});
+    }
   };
 
   useEffect(() => {
@@ -103,7 +128,7 @@ export const AddCounterContainer = () => {
         <div className="space-y-6 p-0">
           <div className="space-y-0.5 pt-5 flex justify-center flex-col items-center">
             <div>
-              <h2 className="text-2xl font-bold tracking-tight mb-0">
+              <h2 className={`text-2xl font-bold tracking-tight mb-0 `}>
                 Create Counter
               </h2>
               <p className="text-muted-foreground text-xs text-base relative opacity-60">
@@ -113,7 +138,18 @@ export const AddCounterContainer = () => {
           </div>
           <div className="border-y-[1px] border-slate-300 py-5 flex justify-center">
             <div className="min-[400px]:flex-grow-0 flex-grow">
-              <CardContent>
+              <CardContent className="flex flex-col gap-4">
+                <div>
+                  {errorMsg && <Alert severity="error">{errorMsg}</Alert>}
+                  {/* <Alert
+                    variant="destructive"
+                    className=" bg-red-300 bg-opacity-30"
+                  >
+                    <AlertCircle className="h-4 w-4" />
+                    <AlertTitle>Error</AlertTitle>
+                    <AlertDescription>{errorMsg}</AlertDescription>
+                  </Alert> */}
+                </div>
                 <div className="grid lg:grid-cols-2 md:grid-cols-2 items-start gap-4 md:px-5">
                   {/* Counter Name Input  */}
                   <div className="flex flex-col gap-2">
@@ -134,20 +170,28 @@ export const AddCounterContainer = () => {
                     <div className="flex flex-1 flex-col gap-2">
                       <Label>Counter Default Value</Label>
                       <Input
-                        {...register("counterDefaultValue", { value: 0 })}
+                        {...register("counterDefaultValue", {
+                          value: 0,
+                          required: true,
+                        })}
                         id="name"
                         placeholder="Name of your Counter"
                         type="number"
+                        required
                       />
                     </div>
                     {/* Count Reset Value Input  */}
                     <div className="flex flex-1 flex-col gap-2">
                       <Label>Counter Reset Value</Label>
                       <Input
-                        {...register("counterResetValue", { value: 0 })}
+                        {...register("counterResetValue", {
+                          value: 0,
+                          required: true,
+                        })}
                         id="name"
                         placeholder="Name of your Counter"
                         type="number"
+                        required
                       />
                     </div>
                   </div>
@@ -185,11 +229,15 @@ export const AddCounterContainer = () => {
                         Minimum Value
                       </Label>
                       <Input
-                        {...register("minimumValue", { value: 0 })}
+                        {...register("minimumValue", {
+                          value: 0,
+                          required: hasCountLimit ? true : false,
+                        })}
                         id="name"
                         placeholder="Counter Maximum Value"
                         type="number"
                         disabled={!hasCountLimit}
+                        required={hasCountLimit}
                       />
                     </div>
                     {/* Maximum Count Value Input  */}
@@ -204,11 +252,15 @@ export const AddCounterContainer = () => {
                         maximum Value
                       </Label>
                       <Input
-                        {...register("maximumValue", { value: 1 })}
+                        {...register("maximumValue", {
+                          value: 1,
+                          required: hasCountLimit ? true : false,
+                        })}
                         id="name"
                         placeholder="Counter Minimum Value"
                         type="number"
                         disabled={!hasCountLimit}
+                        required={hasCountLimit}
                       />
                     </div>
                   </div>

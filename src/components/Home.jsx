@@ -1,36 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { Header, AllCounters } from "./index";
-// import { account } from "../appwrite/appwriteConfig";
-// import { Link, useNavigate } from "react-router-dom";
-// import Warning from "./Warning";
-// import Loader from "./Loader";
 export const Home = () => {
-  // const navigate = useNavigate();
-
-  // const [isLoading, setIsLoading] = useState(true);
-  // const [userDetails, setUserDetails] = useState();
-
-  // useEffect(() => {
-  //   const getData = account.get();
-  //   getData
-  //     .then(
-  //       function (response) {
-  //         setUserDetails(response);
-  //       },
-
-  //       function (error) {
-  //         console.log("Appwrite Error :: Get User Account", error);
-  //       }
-  //     )
-  //     .finally(() => {
-  //       setIsLoading(false);
-  //     });
-  // }, []);
-
-  // const handleLogout = () => {
-  //   setUserDetails(null); // Set userDetails to null after logging out
-  // };
-
   return (
     <>
       <Header />

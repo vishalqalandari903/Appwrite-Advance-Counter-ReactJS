@@ -1,37 +1,33 @@
 import { createSlice, nanoid } from "@reduxjs/toolkit";
+import { login } from "../auth";
 
 // const initialState = JSON.parse(localStorage.getItem("count")) || 0;
 const initialState = {
-  counters: JSON.parse(localStorage.getItem("counters")) || [
-    {
-      id: nanoid(),
-      name: "Counter",
-      count: 0,
-    },
-  ],
+  counters: [],
 };
 
 export const counterSlice = createSlice({
   name: "counter",
   initialState,
   reducers: {
+    setCounters: (state, action) => {
+      state.counters = action.payload;
+    },
     increamentCount: (state, action) => {
       state.counters.find(
-        (counter) => counter.id == action.payload.id
-      ).count += 1;
-      return state;
+        (counter) => action.payload.id === counter.$id
+      ).value += 1;
     },
     decreamentCount: (state, action) => {
       state.counters.find(
-        (counter) => counter.id == action.payload.id
-      ).count -= 1;
-      return state;
+        (counter) => action.payload.id === counter.$id
+      ).value -= 1;
     },
     resetCount: (state, action) => {
-      state.counters.find(
-        (counter) => counter.id == action.payload.id
-      ).count = 0;
-      return state;
+      let counter = state.counters.find(
+        (counter) => action.payload.id === counter.$id
+      );
+      counter.value = counter.resetValue;
     },
     deleteAllCounters: (state) => {
       state.counters = [];
@@ -47,9 +43,8 @@ export const counterSlice = createSlice({
     },
     deleteCounter: (state, action) => {
       state.counters = state.counters.filter(
-        (counter) => counter.id != action.payload.id
+        (counter) => counter.$id !== action.payload.id
       );
-      return state;
     },
     duplicateCounter: (state, action) => {
       let counter = {
@@ -64,7 +59,6 @@ export const counterSlice = createSlice({
         counter
       );
     },
-    changeCounterName: (state, action) => {},
   },
 });
 
@@ -76,6 +70,7 @@ export const {
   addCounter,
   deleteCounter,
   duplicateCounter,
+  setCounters,
 } = counterSlice.actions;
 
 export default counterSlice.reducer;

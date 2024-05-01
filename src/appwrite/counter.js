@@ -33,11 +33,11 @@ export class CounterService {
           name: counterName,
           value: counterDefaultValue,
           resetValue: counterResetValue,
-          hasCountLimit: countLimit.hasCountLimit,
+          hasCountLimit: JSON.parse(countLimit.hasCountLimit),
           minimumValue: countLimit.minimumValue,
           maximumValue: countLimit.maximumValue,
           status,
-          createdOn: createdOn,
+          createdOn,
           userId,
         }
       );
@@ -97,7 +97,7 @@ export class CounterService {
     }
   }
 
-  async getCounters(queries = [Query.equal("status", "published")]) {
+  async getCounters(queries = [Query.equal("status", "public")]) {
     try {
       return await this.databases.listDocuments(
         conf.appwriteDatabaseId,
@@ -105,10 +105,25 @@ export class CounterService {
         queries
       );
     } catch (error) {
-      log("Appwrite Service :: GetCounter :: Error", error);
+      console.log("Appwrite Service :: GetCounter :: Error", error);
+    }
+  }
+
+  async updateValue(slug, value) {
+    try {
+      return await this.databases.updateDocument(
+        conf.appwriteDatabaseId,
+        conf.appwriteCollectionId,
+        slug,
+        {
+          value,
+        }
+      );
+    } catch (error) {
+      console.log("Appwrite Service :: UpdateCounter :: Error ::" + error);
     }
   }
 }
 
-const counter = new CounterService();
-export default counter;
+const counterService = new CounterService();
+export default counterService;

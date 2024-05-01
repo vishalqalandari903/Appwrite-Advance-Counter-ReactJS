@@ -10,29 +10,26 @@ import {
 } from "@tabler/icons-react";
 import { Link, useNavigate } from "react-router-dom";
 import { useForm } from "react-hook-form";
-import { account } from "../../appwrite/appwriteConfig";
+import { login } from "@/app/slices/auth";
+import authService from "@/appwrite/auth";
+import { useDispatch } from "react-redux";
 
 export const Login = () => {
+  const dispatch = useDispatch();
   const navigate = useNavigate();
   const [loginLoading, setLoginLoading] = useState(false);
   const { handleSubmit, register } = useForm();
   const onSubmit = (data) => {
     setLoginLoading(true);
 
-    const promise = account.createEmailPasswordSession(
-      data.email,
-      data.password
-    );
-    promise
-      .then(
-        function (response) {
-          console.log(response); // Success
-          navigate("/");
-        },
-        function (error) {
-          console.log(error); // Failure
-        }
-      )
+    authService
+      .login({ email: data.email, password: data.password })
+      .then((data) => {
+        login({ userData: data });
+      })
+      .catch((error) => {
+        console.log("error", error);
+      })
       .finally(() => {
         setLoginLoading(false);
       });

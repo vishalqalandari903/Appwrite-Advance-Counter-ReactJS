@@ -6,18 +6,33 @@ import {
   decreamentCount,
   resetCount,
   deleteCounter,
-  duplicateCounter,
 } from "../../app/slices/counter";
+import counterService from "../../appwrite/counter";
 
-import { databases } from "../../appwrite/appwriteConfig";
-export const Counter = ({ id, count, name, index }) => {
+import { Copy, FolderPen, Trash } from "lucide-react";
+
+import { Button } from "@/components/ui/button";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuGroup,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuPortal,
+  DropdownMenuSeparator,
+  DropdownMenuShortcut,
+  DropdownMenuSub,
+  DropdownMenuSubContent,
+  DropdownMenuSubTrigger,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { IconDots } from "@tabler/icons-react";
+
+export const Counter = ({ counter, id, count, name, slug }) => {
+  const dispatch = useDispatch();
   const [counterName, setCounterName] = useState(name);
   const [counterInput, setCounterInput] = useState(name);
   const [isNameEditable, setisNameEditable] = useState(false);
-  const [isNavigationActive, setIsNavigationActive] = useState(false);
-  const dispatch = useDispatch();
-
-  const [counter, setCounter] = useState("");
 
   const inputRef = useRef(null);
 
@@ -25,75 +40,39 @@ export const Counter = ({ id, count, name, index }) => {
     {
       id: 3,
       name: "increament",
-      action: () => dispatch(increamentCount({ id: id })),
+      action: () => {
+        counterService.updateValue(slug, count + 1).then(() => {
+          dispatch(increamentCount({ id }));
+        });
+      },
       className: `increament ${counterStyles.backgroundButton}`,
       icon: <i className="fa-solid fa-plus"></i>,
     },
     {
       id: 1,
       name: "decreament",
-      action: () => dispatch(decreamentCount({ id: id })),
+      action: () => {
+        counterService.updateValue(slug, count - 1).then(() => {
+          dispatch(decreamentCount({ id }));
+        });
+      },
       className: `decreament ${counterStyles.backgroundButton} `,
       icon: <i className="fa-solid fa-minus"></i>,
     },
     {
       id: 2,
       name: "reset",
-      action: () => dispatch(resetCount({ id: id })),
+      action: () => {
+        console.log(counter);
+        counterService.updateValue(slug, counter.resetValue).then(() => {
+          dispatch(resetCount({ id }));
+        });
+      },
       className: `reset ${counterStyles.borderButton}`,
       icon: <i className="fa fa-refresh" aria-hidden="true"></i>,
     },
   ];
   actionButtons.sort((a, b) => a.id - b.id);
-  // console.log(id);
-
-  const deleteCounter = () => {
-    const promise = databases.deleteDocument(
-      "661f34bbb5d1a230d246",
-      "661f351331712a69aa84",
-      id
-    );
-
-    promise.then(
-      function (response) {
-        console.log(response); // Success
-      },
-      function (error) {
-        console.log(error); // Failure
-      }
-    );
-  };
-
-  const counterNavigationItems = [
-    {
-      id: 1,
-      label: "Github Repository",
-      action: () =>
-        window.open(
-          "https://github.com/vishalqalandari903/Counter-using-ReactJS",
-          "_blank"
-        ),
-    },
-    {
-      id: 2,
-      label: "Duplicate Counter",
-      action: () => dispatch(duplicateCounter({ id: id })),
-    },
-    {
-      id: 3,
-      label: "Rename Counter",
-      action: () => {
-        setisNameEditable(true);
-        inputRef.current.focus();
-      },
-    },
-    {
-      id: 4,
-      label: "Delete Counter",
-      action: () => deleteCounter(),
-    },
-  ];
-  counterNavigationItems.sort((a, b) => a.id - b.id);
 
   const changeCounterName = (e) => {
     if (e.key) {
@@ -140,37 +119,8 @@ export const Counter = ({ id, count, name, index }) => {
               ref={inputRef}
             />
 
-            <div className="absolute right-0 top-0 justify-self-end card-img_hover">
-              <div
-                className="text-black dark:text-white rounded-tr-md px-2 hover:bg-slate-500 dark:hover:bg-slate-700 hover:bg-opacity-20 cursor-pointer relative text-xl"
-                onClick={() => setIsNavigationActive(!isNavigationActive)}
-              >
-                {isNavigationActive ? (
-                  <i className="fa-solid fa-xmark"></i>
-                ) : (
-                  <i className="fa-solid fa-ellipsis"></i>
-                )}
-              </div>
-              <ul
-                className={`absolute right-2 top-7 text-nowrap bg-slate-50 rounded-md overflow-hidden ${
-                  isNavigationActive ? "block" : "hidden"
-                } shadow-lg max-w-40 border-gray-400 border-opacity-70 border p-2`}
-              >
-                {counterNavigationItems.map((counterNavigationItem) => (
-                  <li
-                    className="px-2 py-1 cursor-pointer text-sm hover:bg-gray-300 hover:bg-opacity-25 overflow-hidden text-ellipsis rounded-md text-black"
-                    title={counterNavigationItem.label}
-                    key={counterNavigationItem.id}
-                    onClick={() => {
-                      counterNavigationItem.action();
-                      setIsNavigationActive(false);
-                    }}
-                    target="_blank"
-                  >
-                    {counterNavigationItem.label}
-                  </li>
-                ))}
-              </ul>
+            <div className="absolute right-0 top-0">
+              <Dropdown counter={counter} />
             </div>
           </header>
 
@@ -191,3 +141,67 @@ export const Counter = ({ id, count, name, index }) => {
     </>
   );
 };
+
+function Dropdown({ counter }) {
+  const dispatch = useDispatch();
+  const counterNavigationItems = [
+    {
+      id: 1,
+      label: "Duplicate Counter",
+      action: () => {
+        console.log("duplicate counter");
+      },
+      icon: <Copy className="mr-2 h-4 w-4" />,
+      shortcut: "⇧⌘P",
+    },
+    {
+      id: 2,
+      label: "Edit Counter",
+      action: () => {
+        console.log("edit counter");
+      },
+      icon: <FolderPen className="mr-2 h-4 w-4" />,
+      shortcut: "⇧⌘P",
+    },
+    {
+      id: 3,
+      label: "Delete Counter",
+      action: () => {
+        counterService.deleteCounter(counter.slug).then(() => {
+          dispatch(deleteCounter({ id: counter.$id }));
+        });
+      },
+      icon: <Trash className="mr-2 h-4 w-4" />,
+      shortcut: "⇧⌘P",
+    },
+  ];
+  counterNavigationItems.sort((a, b) => a.id - b.id);
+
+  return (
+    <DropdownMenu>
+      <DropdownMenuTrigger asChild>
+        <Button
+          variant="outline"
+          className="h-full p-0 text-2xl px-1 rounded-none rounded-tr-md dark:bg-background dark:border-transparent transition-none"
+        >
+          {/* <BsThreeDots /> */}
+          <IconDots />
+        </Button>
+      </DropdownMenuTrigger>
+      <DropdownMenuContent>
+        {/* <DropdownMenuLabel>My Counter</DropdownMenuLabel> */}
+        {/* <DropdownMenuSeparator /> */}
+        {counterNavigationItems.map((item, index) => (
+          <DropdownMenuItem
+            className="cursor-pointer pr-5"
+            onClick={item.action}
+            key={index}
+          >
+            <span>{item.label}</span>
+            {/* <DropdownMenuShortcut>{item.shortcut}</DropdownMenuShortcut> */}
+          </DropdownMenuItem>
+        ))}
+      </DropdownMenuContent>
+    </DropdownMenu>
+  );
+}
