@@ -33,13 +33,8 @@ export const counterSlice = createSlice({
       state.counters = [];
       return state;
     },
-    addCounter: (state, action) => {
-      let counter = {
-        id: nanoid(),
-        name: action.payload.name,
-        count: 0,
-      };
-      state.counters.push(counter);
+    createCounter: (state, action) => {
+      state.counters.push(action.payload);
     },
     deleteCounter: (state, action) => {
       state.counters = state.counters.filter(
@@ -67,7 +62,7 @@ export const {
   increamentCount,
   decreamentCount,
   resetCount,
-  addCounter,
+  createCounter,
   deleteCounter,
   duplicateCounter,
   setCounters,

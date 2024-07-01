@@ -11,7 +11,7 @@ export const AllCounters = () => {
 
   return (
     <CountersWrapper>
-      {counters.length == 0 &&
+      {counters.length !== 0 &&
         counters.map((counter, index) => (
           <Counter
             counter={counter}
@@ -23,7 +23,7 @@ export const AllCounters = () => {
             slug={counter.slug}
           />
         ))}
-      {counters.length !== 0 && <p>Counters Not Found</p>}
+      {counters.length == 0 && <p>Counters Not Found</p>}
     </CountersWrapper>
   );
 };
